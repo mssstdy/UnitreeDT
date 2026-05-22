@@ -4,6 +4,7 @@ public class ScanZone : MonoBehaviour
 {
     [Header("Ссылки")]
     [SerializeField] private ParcelDatabase parcelDatabase;
+    [SerializeField] private TaskPlanner taskPlanner;
 
     private void Awake()
     {
@@ -11,11 +12,21 @@ public class ScanZone : MonoBehaviour
         {
             parcelDatabase = FindFirstObjectByType<ParcelDatabase>();
         }
+
+        if (taskPlanner == null)
+        {
+            taskPlanner = FindFirstObjectByType<TaskPlanner>();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
         ScannableCode code = other.GetComponent<ScannableCode>();
+
+        if (code == null)
+        {
+            code = other.GetComponentInParent<ScannableCode>();
+        }
 
         if (code == null)
         {
@@ -31,13 +42,19 @@ public class ScanZone : MonoBehaviour
             return;
         }
 
+        if (taskPlanner == null)
+        {
+            Debug.LogError("ScanZone: TaskPlanner не найден.");
+            return;
+        }
+
         if (code.codeType == CodeType.OrderCode)
         {
             HandleOrderCode(code);
         }
         else if (code.codeType == CodeType.ParcelCode)
         {
-            HandleParcelCode(code, other.gameObject);
+            HandleParcelCode(code);
         }
     }
 
@@ -51,30 +68,17 @@ public class ScanZone : MonoBehaviour
             return;
         }
 
-        if (record.status == ParcelStatus.Delivered)
-        {
-            Debug.LogWarning($"ScanZone: заказ {record.orderId} уже был выдан.");
-            return;
-        }
-
-        if (string.IsNullOrEmpty(record.cellId))
-        {
-            Debug.LogWarning($"ScanZone: заказ {record.orderId} найден, но ячейка хранения не указана.");
-            return;
-        }
-
-        Debug.Log(
-            $"ScanZone: заказ найден. " +
-            $"Order: {record.orderId}, Parcel: {record.parcelId}, Cell: {record.cellId}, Status: {record.status}"
-        );
-
-        // Позже здесь будет вызов TaskPlanner:
-        // taskPlanner.StartRetrieveParcel(record);
+        taskPlanner.StartRetrieveParcel(record);
     }
 
-    private void HandleParcelCode(ScannableCode code, GameObject scannedObject)
+    private void HandleParcelCode(ScannableCode code)
     {
-        ParcelData parcelData = scannedObject.GetComponent<ParcelData>();
+        ParcelData parcelData = code.GetComponent<ParcelData>();
+
+        if (parcelData == null)
+        {
+            parcelData = code.GetComponentInParent<ParcelData>();
+        }
 
         if (parcelData == null)
         {
@@ -82,14 +86,6 @@ public class ScanZone : MonoBehaviour
             return;
         }
 
-        parcelDatabase.RegisterOrUpdateParcel(parcelData);
-
-        Debug.Log(
-            $"ScanZone: новая/обновленная посылка зарегистрирована. " +
-            $"Order: {parcelData.orderId}, Parcel: {parcelData.parcelId}, Status: {parcelData.status}"
-        );
-
-        // Позже здесь будет вызов TaskPlanner:
-        // taskPlanner.StartStoreParcel(parcelData);
+        taskPlanner.StartStoreParcel(parcelData);
     }
 }
