@@ -1,4 +1,7 @@
 ﻿<Solution>
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Unity.Robotics.UrdfImporter.Editor.csproj" />
+  <Project Path="Unity.Robotics.UrdfImporter.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
+  <Project Path="vhacd.csproj" />
 </Solution>
