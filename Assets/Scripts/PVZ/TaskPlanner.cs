@@ -15,6 +15,7 @@ public class TaskPlanner : MonoBehaviour
     [SerializeField] private ParcelDatabase parcelDatabase;
     [SerializeField] private ShelfManager shelfManager;
     [SerializeField] private RobotController robotController;
+    [SerializeField] private PVZTrainingManager trainingManager;
 
     [Header("Основные точки маршрута")]
     [SerializeField] private Transform wpRobotIdle;
@@ -66,10 +67,21 @@ public class TaskPlanner : MonoBehaviour
         {
             robotController = FindFirstObjectByType<RobotController>();
         }
+
+        if (trainingManager == null)
+        {
+            trainingManager = FindFirstObjectByType<PVZTrainingManager>();
+        }
     }
 
     public void StartStoreParcel(ParcelData parcelData)
     {
+        if (IsTrainingModeActive())
+        {
+            Debug.LogWarning("TaskPlanner: request ignored because Training Mode is active.");
+            return;
+        }
+
         if (isBusy)
         {
             Debug.LogWarning("TaskPlanner: система занята другой задачей.");
@@ -81,6 +93,12 @@ public class TaskPlanner : MonoBehaviour
 
     public void StartRetrieveParcel(ParcelRecord record)
     {
+        if (IsTrainingModeActive())
+        {
+            Debug.LogWarning("TaskPlanner: request ignored because Training Mode is active.");
+            return;
+        }
+
         if (isBusy)
         {
             Debug.LogWarning("TaskPlanner: система занята другой задачей.");
@@ -369,6 +387,28 @@ public class TaskPlanner : MonoBehaviour
         }
 
         return true;
+    }
+
+    public void CancelActiveTaskForTraining()
+    {
+        StopAllCoroutines();
+
+        isBusy = false;
+        currentTask = PvzTaskType.None;
+        currentStatusMessage = "Training Mode active. TaskPlanner is paused.";
+        activeOrderId = string.Empty;
+        activeParcelId = string.Empty;
+        activeCellId = string.Empty;
+    }
+
+    private bool IsTrainingModeActive()
+    {
+        if (trainingManager == null)
+        {
+            trainingManager = FindFirstObjectByType<PVZTrainingManager>();
+        }
+
+        return trainingManager != null && trainingManager.IsTrainingMode;
     }
 
     private void MoveParcelToPoint(GameObject parcelObject, Transform targetPoint, bool enablePhysicsAfterMove)

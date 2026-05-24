@@ -5,6 +5,7 @@ public class ScanZone : MonoBehaviour
     [Header("Ссылки")]
     [SerializeField] private ParcelDatabase parcelDatabase;
     [SerializeField] private TaskPlanner taskPlanner;
+    [SerializeField] private PVZTrainingManager trainingManager;
 
     private void Awake()
     {
@@ -17,10 +18,20 @@ public class ScanZone : MonoBehaviour
         {
             taskPlanner = FindFirstObjectByType<TaskPlanner>();
         }
+
+        if (trainingManager == null)
+        {
+            trainingManager = FindFirstObjectByType<PVZTrainingManager>();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
+        if (IsTrainingModeActive())
+        {
+            return;
+        }
+
         ScannableCode code = other.GetComponent<ScannableCode>();
 
         if (code == null)
@@ -87,5 +98,15 @@ public class ScanZone : MonoBehaviour
         }
 
         taskPlanner.StartStoreParcel(parcelData);
+    }
+
+    private bool IsTrainingModeActive()
+    {
+        if (trainingManager == null)
+        {
+            trainingManager = FindFirstObjectByType<PVZTrainingManager>();
+        }
+
+        return trainingManager != null && trainingManager.IsTrainingMode;
     }
 }

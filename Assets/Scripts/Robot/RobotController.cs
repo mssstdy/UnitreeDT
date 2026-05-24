@@ -6,6 +6,7 @@ public class RobotController : MonoBehaviour
     [Header("Основные ссылки")]
     [SerializeField] private Transform robotRoot;
     [SerializeField] private Transform holdPoint;
+    [SerializeField] private PVZTrainingManager trainingManager;
 
     [Header("Движение")]
     [SerializeField] private float moveSpeed = 1.5f;
@@ -26,10 +27,21 @@ public class RobotController : MonoBehaviour
         {
             robotRoot = transform;
         }
+
+        if (trainingManager == null)
+        {
+            trainingManager = FindFirstObjectByType<PVZTrainingManager>();
+        }
     }
 
     public IEnumerator MoveAlongRoute(params Transform[] routePoints)
     {
+        if (IsTrainingModeActive())
+        {
+            CancelMotionForTraining();
+            yield break;
+        }
+
         if (routePoints == null || routePoints.Length == 0)
         {
             Debug.LogWarning("RobotController: маршрут пуст.");
@@ -38,6 +50,12 @@ public class RobotController : MonoBehaviour
 
         foreach (Transform point in routePoints)
         {
+            if (IsTrainingModeActive())
+            {
+                CancelMotionForTraining();
+                yield break;
+            }
+
             if (point == null)
             {
                 Debug.LogWarning("RobotController: в маршруте есть пустая точка.");
@@ -50,6 +68,12 @@ public class RobotController : MonoBehaviour
 
     public IEnumerator MoveTo(Transform targetPoint)
     {
+        if (IsTrainingModeActive())
+        {
+            CancelMotionForTraining();
+            yield break;
+        }
+
         if (targetPoint == null)
         {
             Debug.LogWarning("RobotController: целевая точка не назначена.");
@@ -62,6 +86,12 @@ public class RobotController : MonoBehaviour
 
         while (Vector3.Distance(robotRoot.position, GetFlatTargetPosition(targetPoint)) > stoppingDistance)
         {
+            if (IsTrainingModeActive())
+            {
+                CancelMotionForTraining();
+                yield break;
+            }
+
             Vector3 targetPosition = GetFlatTargetPosition(targetPoint);
             Vector3 direction = targetPosition - robotRoot.position;
 
@@ -99,8 +129,30 @@ public class RobotController : MonoBehaviour
         return targetPosition;
     }
 
+    public void CancelMotionForTraining()
+    {
+        StopAllCoroutines();
+        isMoving = false;
+    }
+
+    private bool IsTrainingModeActive()
+    {
+        if (trainingManager == null)
+        {
+            trainingManager = FindFirstObjectByType<PVZTrainingManager>();
+        }
+
+        return trainingManager != null && trainingManager.IsTrainingMode;
+    }
+
     public void AttachParcel(GameObject parcelObject)
     {
+        if (IsTrainingModeActive())
+        {
+            Debug.LogWarning("RobotController: parcel attach ignored because Training Mode is active.");
+            return;
+        }
+
         if (parcelObject == null)
         {
             Debug.LogWarning("RobotController: нельзя взять пустую посылку.");
@@ -140,6 +192,12 @@ public class RobotController : MonoBehaviour
 
     public void ReleaseParcelToPoint(Transform targetPoint, bool enablePhysicsAfterRelease)
     {
+        if (IsTrainingModeActive())
+        {
+            Debug.LogWarning("RobotController: parcel release ignored because Training Mode is active.");
+            return;
+        }
+
         if (heldParcel == null)
         {
             Debug.LogWarning("RobotController: нет посылки для отпускания.");
