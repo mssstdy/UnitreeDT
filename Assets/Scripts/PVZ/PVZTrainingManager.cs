@@ -1,3 +1,7 @@
+using System;
+using Unity.MLAgents;
+using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Policies;
 using UnityEngine;
 
 public class PVZTrainingManager : MonoBehaviour
@@ -27,6 +31,23 @@ public class PVZTrainingManager : MonoBehaviour
     [SerializeField] private MonoBehaviour[] trainingModeBehaviours;
     [SerializeField] private Rigidbody robotRigidbody;
     [SerializeField] private bool makeRobotRigidbodyKinematicInDemo = true;
+
+    [Header("ML-Agents Navigation")]
+    [SerializeField] private bool setupNavigationComponents = true;
+    [SerializeField] private string behaviorName = "PVZNavigation";
+    [SerializeField] private BehaviorType behaviorType = BehaviorType.Default;
+    [SerializeField] private int decisionPeriod = 5;
+    [SerializeField] private bool takeActionsBetweenDecisions = true;
+    [SerializeField] private PVZNavigationAgent navigationAgent;
+    [SerializeField] private BehaviorParameters behaviorParameters;
+    [SerializeField] private DecisionRequester decisionRequester;
+
+    [Header("Training Collisions")]
+    [SerializeField] private bool autoTagTrainingColliders = true;
+    [SerializeField] private string wallTag = "Wall";
+    [SerializeField] private string obstacleTag = "Obstacle";
+    [SerializeField] private string[] wallNameKeywords = { "wall" };
+    [SerializeField] private string[] obstacleNameKeywords = { "obstacle", "stoika", "counter", "platform", "table" };
 
     private bool appliedTrainingMode;
     private bool modeWasApplied;
@@ -96,6 +117,7 @@ public class PVZTrainingManager : MonoBehaviour
         ApplyExtraBehaviourState(demoModeBehaviours, !trainingMode);
         ApplyExtraBehaviourState(trainingModeBehaviours, trainingMode);
         ApplyRobotRigidbodyState();
+        ApplyNavigationAgentState();
 
         appliedTrainingMode = trainingMode;
         modeWasApplied = true;
@@ -216,6 +238,189 @@ public class PVZTrainingManager : MonoBehaviour
         {
             robotRigidbody = robotController.GetComponent<Rigidbody>();
         }
+
+        if (setupNavigationComponents)
+        {
+            EnsureNavigationComponents();
+        }
+
+        if (autoTagTrainingColliders)
+        {
+            EnsureTrainingCollisionTags();
+        }
+    }
+
+    private void EnsureNavigationComponents()
+    {
+        if (robotController == null)
+        {
+            return;
+        }
+
+        GameObject robotObject = robotController.gameObject;
+
+        if (robotRigidbody == null)
+        {
+            robotRigidbody = robotObject.GetComponent<Rigidbody>();
+
+            if (robotRigidbody == null)
+            {
+                robotRigidbody = robotObject.AddComponent<Rigidbody>();
+            }
+        }
+
+        if (behaviorParameters == null)
+        {
+            behaviorParameters = robotObject.GetComponent<BehaviorParameters>();
+
+            if (behaviorParameters == null)
+            {
+                behaviorParameters = robotObject.AddComponent<BehaviorParameters>();
+            }
+        }
+
+        ConfigureNavigationComponents();
+
+        if (navigationAgent == null)
+        {
+            navigationAgent = robotObject.GetComponent<PVZNavigationAgent>();
+
+            if (navigationAgent == null)
+            {
+                navigationAgent = robotObject.AddComponent<PVZNavigationAgent>();
+            }
+        }
+
+        if (decisionRequester == null)
+        {
+            decisionRequester = robotObject.GetComponent<DecisionRequester>();
+
+            if (decisionRequester == null)
+            {
+                decisionRequester = robotObject.AddComponent<DecisionRequester>();
+            }
+        }
+
+        ConfigureNavigationComponents();
+    }
+
+    private void ConfigureNavigationComponents()
+    {
+        if (robotRigidbody != null)
+        {
+            robotRigidbody.useGravity = false;
+            robotRigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+            robotRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            robotRigidbody.constraints = RigidbodyConstraints.FreezePositionY |
+                RigidbodyConstraints.FreezeRotationX |
+                RigidbodyConstraints.FreezeRotationZ;
+        }
+
+        if (behaviorParameters != null)
+        {
+            behaviorParameters.BehaviorName = behaviorName;
+            behaviorParameters.BehaviorType = behaviorType;
+            behaviorParameters.BrainParameters.VectorObservationSize = 10;
+            behaviorParameters.BrainParameters.NumStackedVectorObservations = 1;
+            behaviorParameters.BrainParameters.ActionSpec = ActionSpec.MakeContinuous(2);
+        }
+
+        if (decisionRequester != null)
+        {
+            decisionRequester.DecisionPeriod = Mathf.Max(1, decisionPeriod);
+            decisionRequester.DecisionStep = 0;
+            decisionRequester.TakeActionsBetweenDecisions = takeActionsBetweenDecisions;
+        }
+
+        if (navigationAgent != null)
+        {
+            navigationAgent.Configure(this, robotRigidbody, spawnPoint);
+        }
+    }
+
+    private void ApplyNavigationAgentState()
+    {
+        if (!setupNavigationComponents)
+        {
+            return;
+        }
+
+        if (navigationAgent != null)
+        {
+            navigationAgent.enabled = trainingMode;
+        }
+
+        if (decisionRequester != null)
+        {
+            decisionRequester.enabled = trainingMode;
+        }
+    }
+
+    private void EnsureTrainingCollisionTags()
+    {
+        Collider[] colliders = FindObjectsByType<Collider>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+        foreach (Collider collider in colliders)
+        {
+            if (collider == null)
+            {
+                continue;
+            }
+
+            GameObject colliderObject = collider.gameObject;
+
+            if (TransformNameContains(colliderObject.transform, wallNameKeywords))
+            {
+                TrySetTag(colliderObject, wallTag);
+            }
+            else if (TransformNameContains(colliderObject.transform, obstacleNameKeywords))
+            {
+                TrySetTag(colliderObject, obstacleTag);
+            }
+        }
+    }
+
+    private void TrySetTag(GameObject targetObject, string targetTag)
+    {
+        if (targetObject == null || string.IsNullOrEmpty(targetTag) || targetObject.tag == targetTag)
+        {
+            return;
+        }
+
+        try
+        {
+            targetObject.tag = targetTag;
+        }
+        catch (UnityException)
+        {
+            Debug.LogWarning($"PVZTrainingManager: tag '{targetTag}' is missing in TagManager.");
+        }
+    }
+
+    private bool TransformNameContains(Transform start, string[] keywords)
+    {
+        if (start == null || keywords == null)
+        {
+            return false;
+        }
+
+        Transform current = start;
+
+        while (current != null)
+        {
+            foreach (string keyword in keywords)
+            {
+                if (!string.IsNullOrEmpty(keyword) &&
+                    current.name.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            current = current.parent;
+        }
+
+        return false;
     }
 
     private void CaptureInitialEnabledStatesIfNeeded()
