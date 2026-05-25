@@ -8088,10 +8088,6 @@ GameObject:
   - component: {fileID: 1847300719}
   - component: {fileID: 1847300721}
   - component: {fileID: 1847300720}
-  - component: {fileID: 1847300725}
-  - component: {fileID: 1847300724}
-  - component: {fileID: 1847300723}
-  - component: {fileID: 1847300722}
   m_Layer: 0
   m_Name: RobotPlaceholder
   m_TagString: Untagged
@@ -8150,116 +8146,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WorldTransformCoordinates
   worldPosition: {x: 2.2, y: 0, z: 4.5}
   localPosition: {x: 0.012, y: -0.01, z: 0.035}
---- !u!114 &1847300722
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1847300718}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3a5c9d521e5ef4759a8246a07d52221e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.DecisionRequester
-  DecisionPeriod: 5
-  DecisionStep: 0
-  TakeActionsBetweenDecisions: 1
---- !u!114 &1847300723
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1847300718}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8b8e9e3f7d8a4b53a2713449bbd5a6b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PVZNavigationAgent
-  agentParameters:
-    maxStep: 0
-  hasUpgradedFromAgentParameters: 1
-  MaxStep: 0
-  trainingManager: {fileID: 2099300003}
-  robotRigidbody: {fileID: 1847300724}
-  spawnPoint: {fileID: 1419484557}
-  currentTarget: {fileID: 0}
-  moveSpeed: 1.8
-  rotationSpeed: 180
-  targetRadius: 0.35
-  successReward: 1
-  collisionPenalty: -1
-  stepPenalty: -0.001
-  progressRewardScale: 0.02
-  maxEpisodeSteps: 1000
-  distanceNormalizer: 10
-  velocityNormalizer: 2
-  requireTrainingMode: 1
-  wallTag: Wall
-  obstacleTag: Obstacle
-  wallNameKeywords:
-  - wall
-  obstacleNameKeywords:
-  - obstacle
---- !u!54 &1847300724
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1847300718}
-  serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 0
-  m_IsKinematic: 0
-  m_Interpolate: 1
-  m_Constraints: 84
-  m_CollisionDetection: 2
---- !u!114 &1847300725
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1847300718}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5d1c4e0b1822b495aa52bc52839ecb30, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.ML-Agents::Unity.MLAgents.Policies.BehaviorParameters
-  m_BrainParameters:
-    VectorObservationSize: 10
-    NumStackedVectorObservations: 1
-    m_ActionSpec:
-      m_NumContinuousActions: 2
-      BranchSizes: 
-    VectorActionSize: 02000000
-    VectorActionDescriptions: []
-    VectorActionSpaceType: 1
-    hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 5022602860645237092, guid: 67c0d6bddc5693547bae9f89ec91e30a, type: 3}
-  m_InferenceDevice: 0
-  m_BehaviorType: 0
-  m_BehaviorName: PVZNavigation
-  TeamId: 0
-  m_UseChildSensors: 1
-  m_UseChildActuators: 1
-  m_DeterministicInference: 0
-  m_ObservableAttributeHandling: 0
 --- !u!1 &1859964985
 GameObject:
   m_ObjectHideFlags: 0
@@ -8832,12 +8718,12 @@ MonoBehaviour:
   makeRobotRigidbodyKinematicInDemo: 1
   setupNavigationComponents: 1
   behaviorName: PVZNavigation
-  behaviorType: 2
+  behaviorType: 0
   decisionPeriod: 5
   takeActionsBetweenDecisions: 1
-  navigationAgent: {fileID: 1847300723}
-  behaviorParameters: {fileID: 1847300725}
-  decisionRequester: {fileID: 1847300722}
+  navigationAgent: {fileID: 0}
+  behaviorParameters: {fileID: 0}
+  decisionRequester: {fileID: 0}
   autoTagTrainingColliders: 1
   wallTag: Wall
   obstacleTag: Obstacle

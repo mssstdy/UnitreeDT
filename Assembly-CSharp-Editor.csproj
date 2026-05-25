@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
+    <Compile Include="Assets\Scripts\Tools\Editor\GlobalCordEdit.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
